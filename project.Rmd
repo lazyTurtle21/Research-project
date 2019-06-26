@@ -1,0 +1,122 @@
+---
+title: "Mini-research project"
+author: "Sophia Kholod"
+output:
+  html_document:
+    df_print: paged
+---
+
+For my analysis I've decided to take the data on alcohol consumption(https://data.world/uncc-dsba/dsba-6100-fall-2016) and the average life expectancy(from the WHO - World Health Organization site (https://www.who.int/violence_injury_prevention/surveillance/databases/en/)).
+
+So, our null hypothesis $H_0$ is that the alcohol consumption has linear relation with the average life duration (with some specific parameters). Respectively, $H_1$ - that there are no linear dependence.
+
+```{r}
+setwd("D:/R/labs") # !Important! Set this as a root directory of your project.Rmd file
+set.seed(10)
+data = с(0.8359911454100163, 0.02817985273608148, 0.07914818694002312, 0.42693009541109517, 0.07399886750890639, 0.726604434686919, 0.2907664222035502, 0.6993164161298344, 0.6988323405022042, 0.18075470183141307, 0.21513960561682655, 0.4895443802847994, 0.12437816814095803, 0.6925099020956256, 0.7395647482700498, 0.8122431412081754, 0.22949009194310865, 0.8123865549095128, 0.7409588212169987, 0.4883671509266877, 0.11494091442971688, 0.152552357169213, 0.0917396147821875, 0.23513643413256013, 0.8932341226447277, 0.14191220061722631, 0.04420942032589559, 0.1492512001467643, 0.2809688360464424, 0.4246082029723379, 0.4637664590424203, 0.7890615234200175, 0.4597351681427865, 0.9413220163172795, 0.043607768089526155, 0.9727263187170043, 0.466224578222481, 0.765882864387263, 0.20830921365779476, 0.7659752405878477, 0.6871060543920383, 0.7703446186266582, 0.4588106764232679, 0.5540223855116353, 0.9530690433573865, 0.5202173134687759, 0.9173504772345163, 0.7784250913903122, 0.3411685476865146, 0.31967701086780864, 0.8972304715189295, 0.05694701209142172, 0.2277728354773475, 0.14968370253821717, 0.9625196064042385, 0.27532779858194856, 0.4922354645408845, 0.9696305655803306, 0.2809342569066704, 0.9882415992594009, 0.5531430484476427, 0.7038579177852168, 0.04031591214467711, 0.018119116831451176, 0.5351675325912592, 0.5254078722067861, 0.1561464446847347, 0.4320491588763582, 0.8264274602395429, 0.03862812439776486, 0.9489156110482436, 0.27239174354002216, 0.9115047443531739, 0.4174500902795013, 0.5107652670221831, 0.4029892202076292, 0.9912848879352293, 0.21551034120393564, 0.30744371710573126, 0.26119883626641593, 0.2825790187741175, 0.16211024175667343, 0.6266653646838717, 0.4420894906358346, 0.3230554864974652, 0.476969133249488, 0.04653533199160231, 0.11012629335453972, 0.0066980923416031235, 0.48892266486429903, 0.10966345627424234, 0.06300416985475055, 0.3740614928852609, 0.4030296706404505, 0.9142919846087777, 0.0736447908339336, 0.8068758542645262, 0.972096368488737, 0.35839311476822144, 0.43592122756381946)
+data2 = c(1:100, 100)
+data
+data2
+scatter.smooth(x=data, y=data2)
+all_life_duration <- read.csv(file="data/lifeexpectancy.csv", header=TRUE, sep=",")
+alco <- read.csv(file="data/drinks.csv", header=TRUE, sep=",")
+
+head(all_life_duration)
+```
+
+
+At first, I calculated the total alcohol consumption in litres. To do that, I've googled the average amount of pure alcohol in all three types of drinks.
+
+```{r}
+total_alcohol = as.numeric(alco$beer_servings) * 0.045 + as.numeric(alco$spirit_servings) * 0.4 + as.numeric(alco$wine_servings) * 0.116
+```
+
+
+Selecting year 2013, both sexes, the average life expectancy at birth and the people of any income:
+
+```{r}
+life_duration_2013 = as.numeric(subset(all_life_duration, SexCode == "BTSX" & GhoCode == "WHOSIS_000001" & YearCode == 2013 & WorldBankIncomeGroupGroupCode == "")$Numeric)[sample(1:193)]
+
+scatter.smooth(x=total_alcohol, y=life_duration_2013)
+```
+
+
+As we can see, the data hardly has any linear dependence, and also, our linear regression proves it:
+
+```{r}
+ln_reg = lm(life_duration_2013~total_alcohol)
+summary(ln_reg)
+```
+
+
+The $p$-value is relatively large (0.05 is considered as ok value for good model). Also, the determination coefficient is close to 0, which means the model explains only less than 1 percent of the data (for real-world data, $R^2$ is considered to be good if it takes values near 0.5). The parameters are 71.56989 for the intercept and -0.01480 for the slope.
+
+```{r}
+plot(life_duration_2013 ~ total_alcohol, pch = 16, col = "blue")
+abline(ln_reg, col = "red") 
+```
+
+If we plot the residuals, it also tells us that our model is bad, so we reject $H_0$ that average life duration for both sexes with any income in year 2013 has any linear relation with alcohol consumption :
+
+```{r}
+plot(ln_reg$residuals, pch = 16, col = "red")
+```
+
+
+But we do not reject the general hyrothesis, so we'll try to analyse people with similar income: 
+Here we also use the data from a different year, because 2013 is not fully filled with the data we need.
+The best result I got is:
+
+```{r}
+life_duration_2012 = as.numeric(subset(all_life_duration, SexCode == "BTSX" & GhoCode == "WHOSIS_000001" & YearCode == 2012 & WorldBankIncomeGroupGroupCode == "WB_HI")$Numeric)[sample(1:193)]
+
+scatter.smooth(x=total_alcohol, y=life_duration_2012)
+```
+
+
+But, surprisingly, our model turned out to be quite bad, $p$-value is still quite high, also, the determination coefficient is pretty low. 
+
+```{r}
+ln_reg = lm(life_duration_2012~total_alcohol)
+summary(ln_reg)
+```
+
+
+```{r}
+plot(life_duration_2012 ~ total_alcohol, pch = 16, col = "blue") # Plot the results
+abline(ln_reg, col = "red") 
+```
+
+
+That happens because of the point, which has the life duration around 55 - the $\textbf{outlier}$. 
+Deleting the outlier:
+
+```{r}
+my.min <- function(x) ifelse(!all(is.na(x)), min(x, na.rm=T), NA)
+
+index <- which(life_duration_2012 %in% c(my.min(life_duration_2012)))
+
+life_duration_2012 =  life_duration_2012[life_duration_2012!= my.min(life_duration_2012)]
+
+total_alcohol = total_alcohol[total_alcohol != total_alcohol[index]][sample(1:length(life_duration_2012))]
+```
+
+
+```{r}
+ln_reg12 = lm(life_duration_2012~total_alcohol)
+summary(ln_reg12)
+```
+
+
+```{r}
+plot(life_duration_2012~total_alcohol, pch = 16, col = "blue")
+abline(ln_reg12, col = "red")
+plot(ln_reg12$residuals, pch = 16, col = "red")
+```
+
+
+
+## Summary
+As can be seen, after cleaning the data we got significantly better $p$-value, but the determination coefficient is still very low, so we cannot say that alcohol consuption has any effect on the average life duration in a country.
+
+
